@@ -1,0 +1,45 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #064E3B; /* Deep Medical Green */
+  --color-secondary: #065F46;
+  --color-accent: #D4AF37;   /* Gold Accent */
+  --color-background: #F8FAFC;
+  --color-card: #FFFFFF;
+  
+  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Playfair Display", serif;
+
+  --shadow-clinical: 0 10px 40px -10px rgba(6, 78, 59, 0.08);
+  --shadow-premium: 0 20px 50px -12px rgba(6, 78, 59, 0.12);
+  --shadow-glow: 0 0 20px rgba(212, 175, 55, 0.2);
+  
+  --color-border: #E2E8F0;
+  --color-muted: #64748B;
+  --color-muted-foreground: #94A3B8;
+}
+
+@layer base {
+  body {
+    @apply bg-background text-slate-900 antialiased;
+    font-family: var(--font-sans);
+  }
+}
+
+.bg-gradient-medical {
+  background: linear-gradient(135deg, #064E3B 0%, #065F46 100%);
+}
+
+.text-gold {
+  color: #D4AF37;
+}
+
+.border-gold {
+  border-color: #D4AF37;
+}
+
+.markdown-body {
+  @apply max-w-none text-slate-600 leading-relaxed;
+}
+

@@ -1,0 +1,684 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Base information for all authenticated users.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Firebase Auth UID" },
+        "email": { "type": "string", "format": "email" },
+        "fullName": { "type": "string" },
+        "role": { "type": "string", "enum": ["patient", "staff", "admin", "applicant"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "email", "fullName", "role"]
+    },
+    "EmergencyContact": {
+      "title": "Emergency Contact",
+      "description": "Information for a designated contact person in case of emergency.",
+      "type": "object",
+      "properties": {
+        "fullName": { "type": "string" },
+        "relationship": { "type": "string" },
+        "phone": { "type": "string" },
+        "phoneAlt": { "type": "string" },
+        "email": { "type": "string" },
+        "address": { "type": "string" },
+        "occupation": { "type": "string" },
+        "idType": { "type": "string" },
+        "idNumber": { "type": "string" }
+      },
+      "required": ["fullName", "relationship", "phone"]
+    },
+    "Guarantor": {
+      "title": "Staff Guarantor",
+      "description": "Verification contact for staff accountability.",
+      "type": "object",
+      "properties": {
+        "fullName": { "type": "string" },
+        "relationship": { "type": "string" },
+        "phone": { "type": "string" },
+        "phoneAlt": { "type": "string" },
+        "email": { "type": "string" },
+        "address": { "type": "string" },
+        "occupation": { "type": "string" },
+        "workplace": { "type": "string" },
+        "idType": { "type": "string" },
+        "idNumber": { "type": "string" },
+        "idDocumentUrl": { "type": "string" },
+        "declarationUrl": { "type": "string" }
+      },
+      "required": ["fullName", "relationship", "phone"]
+    },
+    "InterviewSchedule": {
+      "title": "Clinical Interview Schedule",
+      "description": "Details for a candidate's clinical interview.",
+      "type": "object",
+      "properties": {
+        "scheduledDate": { "type": "string", "format": "date-time" },
+        "mode": { "type": "string", "enum": ["virtual", "physical"] },
+        "token": { "type": "string", "description": "Secure access token for the interview node" },
+        "outcome": { "type": "string", "enum": ["pending", "passed", "failed"] }
+      },
+      "required": ["scheduledDate", "mode", "token"]
+    },
+    "CaregiverApplication": {
+      "title": "Hospital Staff Application",
+      "description": "Onboarding dossier for medical professionals including secondary credentials and guarantors.",
+      "type": "object",
+      "properties": {
+        "type": { "type": "string", "enum": ["staff"] },
+        "fullName": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "dob": { "type": "string" },
+        "address": { "type": "string" },
+        "role": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "under_review", "interview", "accepted", "rejected"] },
+        "cv": { "type": "object" },
+        "license": { "type": "object" },
+        "identity": { "type": "object" },
+        "education": { "type": "object" },
+        "guarantor": { "type": "object" },
+        "trackingToken": { "type": "string" },
+        "otp": { "type": "string" },
+        "otpExpiresAt": { "type": "string", "format": "date-time" },
+        "interview": { "$ref": "#/entities/InterviewSchedule" },
+        "appliedAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["fullName", "email", "phone", "role", "status"]
+    },
+    "PatientApplication": {
+      "title": "Patient Application",
+      "description": "Intake application for new patients.",
+      "type": "object",
+      "properties": {
+        "type": { "type": "string", "enum": ["patient"] },
+        "fullName": { "type": "string" },
+        "age": { "type": "integer" },
+        "gender": { "type": "string" },
+        "phone": { "type": "string" },
+        "email": { "type": "string" },
+        "address": { "type": "string" },
+        "medicalConditions": { "type": "string" },
+        "medications": { "type": "string" },
+        "allergies": { "type": "string" },
+        "emergencyContacts": {
+          "type": "array",
+          "items": { "$ref": "#/entities/EmergencyContact" }
+        },
+        "paymentMethod": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "reviewed", "accepted", "rejected"] },
+        "appliedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["fullName", "email", "phone", "status"]
+    },
+    "Patient": {
+      "title": "Patient",
+      "description": "Patient record in the system.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Associated User UID" },
+        "name": { "type": "string" },
+        "dateOfBirth": { "type": "string" },
+        "condition": { "type": "string" },
+        "assignedStaff": { "type": "array", "items": { "type": "string" }, "description": "List of staff UIDs" },
+        "primaryContact": { "type": "string" },
+        "address": { "type": "string" },
+        "billing": {
+          "type": "object",
+          "properties": {
+            "balanceDue": { "type": "number" },
+            "nextDueDate": { "type": "string", "format": "date-time" },
+            "status": { "type": "string", "enum": ["current", "overdue", "pending"] }
+          }
+        }
+      },
+      "required": ["name", "dateOfBirth"]
+    },
+    "Complaint": {
+      "title": "Complaint / Feedback",
+      "description": "Feedback or complaints sent by patients or families.",
+      "type": "object",
+      "properties": {
+        "patientId": { "type": "string" },
+        "userId": { "type": "string" },
+        "subject": { "type": "string" },
+        "message": { "type": "string" },
+        "status": { "type": "string", "enum": ["new", "investigating", "resolved"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "subject", "message", "status"]
+    },
+    "EMREncounter": {
+      "title": "EMR Encounter",
+      "description": "Clinical record of a staff visit or medical update.",
+      "type": "object",
+      "properties": {
+        "patientId": { "type": "string" },
+        "staffId": { "type": "string" },
+        "visitDate": { "type": "string", "format": "date-time" },
+        "notes": { "type": "string" },
+        "vitals": {
+          "type": "object",
+          "properties": {
+            "bloodPressure": { "type": "string" },
+            "heartRate": { "type": "integer" },
+            "temperature": { "type": "number" },
+            "oxygenLevel": { "type": "integer" }
+          }
+        },
+        "medicationsAdministered": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["patientId", "staffId", "visitDate", "notes"]
+    },
+    "Attendance": {
+      "title": "Staff Attendance",
+      "description": "Daily attendance logs for healthcare workers.",
+      "type": "object",
+      "properties": {
+        "staffId": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "loginTime": { "type": "string", "format": "date-time" },
+        "activityDone": { "type": "boolean" },
+        "lastActive": { "type": "string", "format": "date-time" }
+      },
+      "required": ["staffId", "date"]
+    },
+    "Announcement": {
+      "title": "System Announcement",
+      "description": "Broadcast messages from admin.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "target": { "type": "string", "enum": ["global", "staff", "patient", "targeted"] },
+        "targetIds": { "type": "array", "items": { "type": "string" } },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "adminId": { "type": "string" }
+      },
+      "required": ["title", "message", "target", "createdAt"]
+    },
+    "AuditLog": {
+      "title": "Administrative Audit Log",
+      "description": "Records of all administrative actions.",
+      "type": "object",
+      "properties": {
+        "adminId": { "type": "string" },
+        "action": { "type": "string" },
+        "targetId": { "type": "string" },
+        "details": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["adminId", "action", "timestamp"]
+    },
+    "Credential": {
+      "title": "Generated Credentials",
+      "description": "Securely stored usernames and hashed passwords.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "username": { "type": "string" },
+        "passwordHash": { "type": "string" },
+        "role": { "type": "string" },
+        "isTemporary": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "username", "passwordHash"]
+    },
+    "PatientAssessment": {
+      "title": "Patient Quick Assessment",
+      "description": "Clinical assessment submitted by patient upon first login.",
+      "type": "object",
+      "properties": {
+        "patientId": { "type": "string" },
+        "symptoms": { "type": "string" },
+        "conditionDescription": { "type": "string" },
+        "painLevel": { "type": "integer" },
+        "clinicalNotes": { "type": "string" },
+        "submittedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["patientId", "symptoms", "submittedAt"]
+    },
+    "Vitals": {
+      "title": "Clinical Vitals",
+      "description": "Granular patient vital signs according to hospital standards.",
+      "type": "object",
+      "properties": {
+        "temperature": { "type": "number", "description": "Degree Celsius" },
+        "bloodPressure": { "type": "string", "description": "Systolic/Diastolic" },
+        "pulse": { "type": "integer", "description": "Beats per minute" },
+        "respiratoryRate": { "type": "integer", "description": "Breaths per minute" },
+        "glucose": { "type": "number", "description": "mg/dL" },
+        "spo2": { "type": "integer", "description": "Oxygen saturation %" },
+        "recordedAt": { "type": "string", "format": "date-time" },
+        "recordedBy": { "type": "string" }
+      },
+      "required": ["temperature", "bloodPressure", "pulse", "recordedAt", "recordedBy"]
+    },
+    "CarePlan": {
+      "title": "Clinical Care Plan",
+      "description": "Strategic medical management plan for a patient.",
+      "type": "object",
+      "properties": {
+        "diagnosis": { "type": "string" },
+        "goal": { "type": "string" },
+        "intervention": { "type": "string" },
+        "evaluation": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "achieved", "discontinued"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "staffId": { "type": "string" }
+      },
+      "required": ["diagnosis", "goal", "intervention", "staffId"]
+    },
+    "DrugChart": {
+      "title": "Clinical Drug Chart",
+      "description": "Prescription and administration log for patient medications.",
+      "type": "object",
+      "properties": {
+        "drugName": { "type": "string" },
+        "dosage": { "type": "string" },
+        "frequency": { "type": "string", "enum": ["BD", "TDS", "QDS", "PRN", "STAT"] },
+        "route": { "type": "string" },
+        "prescribedBy": { "type": "string" },
+        "adminHistory": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "time": { "type": "string", "format": "date-time" },
+              "staffId": { "type": "string" },
+              "status": { "type": "string", "enum": ["given", "refused", "omitted"] }
+            }
+          }
+        }
+      },
+      "required": ["drugName", "dosage", "frequency", "prescribedBy"]
+    },
+    "IntakeOutput": {
+      "title": "Fluid Balance Log",
+      "description": "Monitoring of patient fluid intake and output.",
+      "type": "object",
+      "properties": {
+        "fluidType": { "type": "string" },
+        "volume": { "type": "number", "description": "In milliliters (ml)" },
+        "time": { "type": "string", "format": "date-time" },
+        "category": { "type": "string", "enum": ["intake", "output"] },
+        "staffId": { "type": "string" }
+      },
+      "required": ["fluidType", "volume", "time", "category", "staffId"]
+    },
+    "NursingReport": {
+      "title": "Nursing Shift Report",
+      "description": "Chronological clinical documentation of patient status and nursing care.",
+      "type": "object",
+      "properties": {
+        "content": { "type": "string" },
+        "shift": { "type": "string", "enum": ["morning", "afternoon", "night"] },
+        "staffId": { "type": "string" },
+        "recordedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["content", "staffId", "recordedAt"]
+    },
+    "ClinicalNote": {
+      "title": "Clinical Progress Note",
+      "description": "Professional notes from doctors or consultants regarding patient progress.",
+      "type": "object",
+      "properties": {
+        "content": { "type": "string" },
+        "type": { "type": "string", "enum": ["consultation", "follow-up", "procedure", "discharge"] },
+        "subspecialty": { "type": "string" },
+        "staffId": { "type": "string" },
+        "recordedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["content", "type", "staffId", "recordedAt"]
+    },
+    "Investigation": {
+      "title": "Medical Investigation",
+      "description": "Request and results for laboratory tests or imaging.",
+      "type": "object",
+      "properties": {
+        "type": { "type": "string", "description": "e.g., CBC, MRI, Blood Glucose" },
+        "category": { "type": "string", "enum": ["lab", "imaging", "other"] },
+        "status": { "type": "string", "enum": ["requested", "pending", "completed", "cancelled"] },
+        "requestedBy": { "type": "string" },
+        "requestedAt": { "type": "string", "format": "date-time" },
+        "result": { "type": "string" },
+        "resultAt": { "type": "string", "format": "date-time" },
+        "attachments": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["type", "category", "status", "requestedBy", "requestedAt"]
+    },
+    "ClinicalAlert": {
+      "title": "Hospital Alert",
+      "description": "System or manual alert for critical patient conditions.",
+      "type": "object",
+      "properties": {
+        "type": { "type": "string", "enum": ["vitals", "medication", "lab", "emergency"] },
+        "severity": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
+        "message": { "type": "string" },
+        "patientId": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "acknowledged", "resolved"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["type", "severity", "message", "patientId", "status", "createdAt"]
+    },
+    "Payment": {
+      "title": "Billing Record",
+      "description": "Financial transaction or bill generated for patient services.",
+      "type": "object",
+      "properties": {
+        "amount": { "type": "number" },
+        "description": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "paid", "partially_paid", "overdue"] },
+        "dueDate": { "type": "string", "format": "date-time" },
+        "paidAt": { "type": "string", "format": "date-time" },
+        "type": { "type": "string", "enum": ["invoice", "receipt", "adjustment"] }
+      },
+      "required": ["amount", "description", "status", "dueDate"]
+    },
+    "PharmacyOrder": {
+      "title": "Pharmacy Order",
+      "description": "Dispensing request and fulfillment log for medications.",
+      "type": "object",
+      "properties": {
+        "patientId": { "type": "string" },
+        "drugChartId": { "type": "string", "description": "Reference to the original prescription." },
+        "drugName": { "type": "string" },
+        "dosage": { "type": "string" },
+        "quantity": { "type": "integer" },
+        "status": { "type": "string", "enum": ["pending", "prepared", "dispensed", "cancelled"] },
+        "pharmacistId": { "type": "string" },
+        "prescribedBy": { "type": "string" },
+        "cost": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "dispensedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["patientId", "drugName", "quantity", "status", "createdAt"]
+    },
+    "LabTestDetail": {
+      "title": "Laboratory Test Detail",
+      "description": "Definition and result parameters for a specific laboratory test.",
+      "type": "object",
+      "properties": {
+        "testName": { "type": "string" },
+        "category": { "type": "string" },
+        "parameters": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "value": { "type": "string" },
+              "unit": { "type": "string" },
+              "referenceRange": { "type": "string" },
+              "isAbnormal": { "type": "boolean" }
+            }
+          }
+        },
+        "sampleType": { "type": "string" },
+        "sampleCollectedAt": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["requested", "sampled", "processing", "completed"] },
+        "technicianId": { "type": "string" },
+        "reportContent": { "type": "string" }
+      },
+      "required": ["testName", "status"]
+    },
+    "InventoryItem": {
+      "title": "Hospital Inventory",
+      "description": "Drug or supply stock tracking.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "category": { "type": "string", "enum": ["drug", "consumable", "equipment"] },
+        "stockLevel": { "type": "integer" },
+        "unit": { "type": "string" },
+        "expiryDate": { "type": "string", "format": "date-time" },
+        "unitPrice": { "type": "number" },
+        "location": { "type": "string" }
+      },
+      "required": ["name", "stockLevel", "category", "unitPrice"]
+    },
+    "RecoveryCode": {
+      "title": "Recovery OTP",
+      "description": "One-time password for credential recovery.",
+      "type": "object",
+      "properties": {
+        "emailOrPhone": { "type": "string" },
+        "otp": { "type": "string" },
+        "expiresAt": { "type": "string", "format": "date-time" },
+        "userId": { "type": "string" }
+      },
+      "required": ["emailOrPhone", "otp", "expiresAt"]
+    },
+    "SurgicalCase": {
+      "title": "Surgical Case Management",
+      "description": "Tracking of a specific surgical procedure from referral to post-op.",
+      "type": "object",
+      "properties": {
+        "patientId": { "type": "string" },
+        "diagnosis": { "type": "string" },
+        "procedureType": { "type": "string" },
+        "urgency": { "type": "string", "enum": ["elective", "urgent", "emergency"] },
+        "subspecialty": { "type": "string", "enum": ["General", "Orthopaedic", "Neurosurgery", "Cardiothoracic", "Plastic", "Urology", "Paediatric"] },
+        "assignedSurgeonId": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "scheduled", "in-surgery", "completed", "post-op"] },
+        "theatreId": { "type": "string" },
+        "surgeryDate": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["patientId", "diagnosis", "procedureType", "urgency", "status"]
+    },
+    "PreOpChecklist": {
+      "title": "Pre-Operative Checklist",
+      "description": "Safety checks required before a surgical procedure.",
+      "type": "object",
+      "properties": {
+        "caseId": { "type": "string" },
+        "consentObtained": { "type": "boolean" },
+        "labsReviewed": { "type": "boolean" },
+        "imagingReviewed": { "type": "boolean" },
+        "anaesthesiaClearance": { "type": "boolean" },
+        "fastingConfirmed": { "type": "boolean" },
+        "completedBy": { "type": "string" },
+        "completedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["caseId", "consentObtained", "anaesthesiaClearance"]
+    },
+    "SurgeryRecord": {
+      "title": "Intra-Operative Record",
+      "description": "Log of what occurred during the surgery.",
+      "type": "object",
+      "properties": {
+        "caseId": { "type": "string" },
+        "startTime": { "type": "string", "format": "date-time" },
+        "endTime": { "type": "string", "format": "date-time" },
+        "procedurePerformed": { "type": "string" },
+        "complications": { "type": "string" },
+        "findings": { "type": "string" },
+        "bloodLoss": { "type": "number" },
+        "surgeonNotes": { "type": "string" },
+        "staffId": { "type": "string" }
+      },
+      "required": ["caseId", "startTime", "procedurePerformed", "staffId"]
+    },
+    "PostOpRecord": {
+      "title": "Post-Operative Progress",
+      "description": "Recovery monitoring after surgery.",
+      "type": "object",
+      "properties": {
+        "caseId": { "type": "string" },
+        "recoveryStatus": { "type": "string" },
+        "painLevel": { "type": "integer", "minimum": 0, "maximum": 10 },
+        "woundCondition": { "type": "string" },
+        "recordedAt": { "type": "string", "format": "date-time" },
+        "staffId": { "type": "string" }
+      },
+      "required": ["caseId", "recoveryStatus", "recordedAt", "staffId"]
+    },
+    "TheatreSchedule": {
+      "title": "OR Schedule",
+      "description": "Time slot management for operating rooms.",
+      "type": "object",
+      "properties": {
+        "theatreId": { "type": "string" },
+        "caseId": { "type": "string" },
+        "startTime": { "type": "string", "format": "date-time" },
+        "endTime": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["booked", "completed", "cancelled"] }
+      },
+      "required": ["theatreId", "startTime", "endTime", "status"]
+    },
+    "OGCase": {
+      "title": "Obstetrics & Gynaecology Case",
+      "description": "Comprehensive O&G clinical record for pregnancy and reproductive health.",
+      "type": "object",
+      "properties": {
+        "patientName": { "type": "string" },
+        "patientId": { "type": "string" },
+        "unit": { "type": "string", "enum": ["Antenatal", "Labour", "Postnatal", "Gynae", "Fertility"] },
+        "age": { "type": "string" },
+        "gravida": { "type": "string" },
+        "para": { "type": "string" },
+        "lmp": { "type": "string", "format": "date" },
+        "edd": { "type": "string", "format": "date" },
+        "status": { "type": "string", "enum": ["Active", "Completed", "Archived"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "createdBy": { "type": "string" },
+        "creatorName": { "type": "string" },
+        "clinicalData": {
+          "type": "object",
+          "properties": {
+            "lastVitals": { "type": "object" },
+            "assessments": { "type": "array", "items": { "type": "object" } }
+          }
+        }
+      },
+      "required": ["patientName", "patientId", "unit", "status", "createdAt", "createdBy"]
+    }
+  },
+  "firestore": {
+    "/og_cases/{caseId}": {
+      "schema": "OGCase",
+      "description": "Records for the Obstetrics & Gynaecology department."
+    },
+    "/counters/{counterId}": {
+      "schema": "object",
+      "description": "Sequential ID counters."
+    },
+    "/user_profiles/{userId}": {
+      "schema": "UserProfile",
+      "description": "Users of the system."
+    },
+    "/credentials/{username}": {
+      "schema": "Credential",
+      "description": "Secure credential lookup mapping."
+    },
+    "/assessments/{assessmentId}": {
+      "schema": "PatientAssessment",
+      "description": "First-login patient assessments."
+    },
+    "/recovery_codes/{codeId}": {
+      "schema": "RecoveryCode",
+      "description": "Temporary recovery keys."
+    },
+    "/applications/{appId}": {
+      "schema": "CaregiverApplication",
+      "description": "Job applications."
+    },
+    "/patients/{patientId}": {
+      "schema": "Patient",
+      "description": "Patient directory."
+    },
+    "/patients/{patientId}/vitals/{vitalId}": {
+      "schema": "Vitals",
+      "description": "Serial vitals monitoring."
+    },
+    "/patients/{patientId}/care_plans/{planId}": {
+      "schema": "CarePlan",
+      "description": "Individual patient care strategies."
+    },
+    "/patients/{patientId}/drug_charts/{chartId}": {
+      "schema": "DrugChart",
+      "description": "Medication administration records."
+    },
+    "/patients/{patientId}/intake_output/{ioId}": {
+      "schema": "IntakeOutput",
+      "description": "Fluid balance charts."
+    },
+    "/patients/{patientId}/nursing_reports/{reportId}": {
+      "schema": "NursingReport",
+      "description": "Shift-based nursing documentation."
+    },
+    "/patients/{patientId}/clinical_notes/{noteId}": {
+      "schema": "ClinicalNote",
+      "description": "Doctor's progression notes."
+    },
+    "/patients/{patientId}/investigations/{invId}": {
+      "schema": "Investigation",
+      "description": "Laboratory and imaging records."
+    },
+    "/alerts/{alertId}": {
+      "schema": "ClinicalAlert",
+      "description": "Critical clinical alerts."
+    },
+    "/patients/{patientId}/encounters/{encounterId}": {
+      "schema": "EMREncounter",
+      "description": "Subcollection of medical encounters for a specific patient."
+    },
+    "/payments/{paymentId}": {
+      "schema": "Payment",
+      "description": "Global billing and payment records."
+    },
+    "/pharmacy_orders/{orderId}": {
+      "schema": "PharmacyOrder",
+      "description": "Medication fulfillment queue."
+    },
+    "/inventory/{itemId}": {
+      "schema": "InventoryItem",
+      "description": "Global inventory management."
+    },
+    "/patients/{patientId}/lab_results/{resultId}": {
+      "schema": "LabTestDetail",
+      "description": "Detailed laboratory result records."
+    },
+    "/complaints/{complaintId}": {
+      "schema": "Complaint",
+      "description": "User feedback and complaints."
+    },
+    "/attendance/{recordId}": {
+      "schema": "Attendance",
+      "description": "Daily attendance records."
+    },
+    "/announcements/{annId}": {
+      "schema": "Announcement",
+      "description": "Admin announcements."
+    },
+    "/audit_logs/{logId}": {
+      "schema": "AuditLog",
+      "description": "History of admin actions."
+    },
+    "/surgical_cases/{caseId}": {
+      "schema": "SurgicalCase",
+      "description": "Primary surgical records."
+    },
+    "/surgical_cases/{caseId}/preop_checklist/latest": {
+      "schema": "PreOpChecklist",
+      "description": "Pre-surgery safety verification."
+    },
+    "/surgical_cases/{caseId}/intraop_record/{id}": {
+      "schema": "SurgeryRecord",
+      "description": "Procedure logging."
+    },
+    "/surgical_cases/{caseId}/postop_monitoring/{recordId}": {
+      "schema": "PostOpRecord",
+      "description": "Patient recovery tracking."
+    },
+    "/theatre_schedule/{scheduleId}": {
+      "schema": "TheatreSchedule",
+      "description": "Operating room time management."
+    }
+  }
+}
