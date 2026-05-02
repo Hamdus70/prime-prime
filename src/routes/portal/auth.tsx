@@ -10,6 +10,11 @@ import { PrimeVitaLogo } from "@/components/PrimeVitaLogo";
 
 export const Route = createFileRoute("/portal/auth")({
   component: AuthPage,
+  validateSearch: (search: Record<string, unknown>) => {
+    return {
+      redirect: (search.redirect as string) || undefined,
+    }
+  },
 });
 
 function AuthPage() {

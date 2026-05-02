@@ -46,6 +46,7 @@ function PaediatricSurgeryDepartmentPage() {
   const [activeTab, setActiveTab] = useState("Dashboard");
   const [selectedCase, setSelectedCase] = useState<PaediatricCase | null>(null);
   const [showNewCaseModal, setShowNewCaseModal] = useState(false);
+  const [referralContext, setReferralContext] = useState<any>(null);
   const [referrals, setReferrals] = useState<any[]>([]);
 
   useEffect(() => {
@@ -181,6 +182,20 @@ function PaediatricSurgeryDepartmentPage() {
                    ))}
                 </div>
              </div>
+          ) : activeTab === "General" ? (
+             <div className="space-y-12">
+                <div className="p-20 text-center bg-white rounded-[4rem] border border-slate-100 shadow-premium relative overflow-hidden">
+                   <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-50 rounded-full -mr-32 -mt-32 opacity-20" />
+                   <Stethoscope className="h-16 w-16 text-indigo-400 mx-auto mb-8" />
+                   <h2 className="text-4xl font-bold text-slate-900 italic serif mb-4">General Paediatric Surgery</h2>
+                   <p className="text-slate-400 max-w-md mx-auto">Elective and routine surgical procedures for toddlers and older children.</p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                   {cases.filter(c => c.subspecialty === "General Paediatric").map((c, i) => (
+                      <CaseCard key={c.id} c={c} idx={i} onClick={() => setSelectedCase(c)} />
+                   ))}
+                </div>
+             </div>
           ) : activeTab === "Emergency" ? (
             <div className="space-y-12">
                <div className="p-20 text-center bg-rose-50 rounded-[4rem] border border-rose-100 shadow-premium">
@@ -222,7 +237,10 @@ function PaediatricSurgeryDepartmentPage() {
                             <p className="text-sm italic serif text-slate-500 line-clamp-1 group-hover:line-clamp-none transition-all">"{ref.reason}"</p>
                          </div>
                          <button 
-                           onClick={() => setShowNewCaseModal(true)}
+                           onClick={() => {
+                              setReferralContext(ref);
+                              setShowNewCaseModal(true);
+                           }}
                            className="px-8 py-3 bg-slate-900 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-blue-600 transition-all"
                          >
                             Evaluate & Admit
@@ -237,6 +255,8 @@ function PaediatricSurgeryDepartmentPage() {
                    )}
                 </div>
              </div>
+          ) : activeTab === "Theatre" ? (
+            <TheatreScheduler cases={cases} />
           ) : (
             <div className="p-32 text-center bg-white rounded-[4rem] border-2 border-dashed border-slate-100">
                <Shell className="h-12 w-12 text-slate-200 mx-auto mb-6 animate-spin-slow" />
@@ -248,8 +268,12 @@ function PaediatricSurgeryDepartmentPage() {
 
       {showNewCaseModal && (
          <NewCaseModal 
-           onClose={() => setShowNewCaseModal(false)} 
+           onClose={() => {
+              setShowNewCaseModal(false);
+              setReferralContext(null);
+           }} 
            refresh={fetchCases}
+           initialData={referralContext}
          />
       )}
     </div>
@@ -618,7 +642,7 @@ function TeamMember({ name, role }: any) {
   );
 }
 
-function NewCaseModal({ onClose, refresh }: any) {
+function NewCaseModal({ onClose, refresh, initialData }: any) {
    const [saving, setSaving] = useState(false);
 
    async function handleSubmit(e: any) {
@@ -647,6 +671,14 @@ function NewCaseModal({ onClose, refresh }: any) {
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp()
          });
+
+         if (initialData?.id) {
+            await updateDoc(doc(db, "referrals", initialData.id), {
+               status: "Completed",
+               updatedAt: serverTimestamp()
+            });
+         }
+
          await refresh();
          onClose();
       } catch (err) {
@@ -678,15 +710,15 @@ function NewCaseModal({ onClose, refresh }: any) {
                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                   <div className="space-y-8">
                      <h3 className="text-[10px] font-bold text-blue-500 uppercase tracking-widest px-2">Patient Essentials</h3>
-                     <SurgeryInput label="Patient Name" name="patientName" required />
+                     <SurgeryInput label="Patient Name" name="patientName" defaultValue={initialData?.patientName} required />
                      <SurgeryInput label="Guardian Name" name="guardianName" required />
                      <div className="grid grid-cols-2 gap-6">
-                        <SurgeryInput label="Patient ID / MRN" name="patientId" required />
+                        <SurgeryInput label="Patient ID / MRN" name="patientId" defaultValue={initialData?.patientId} required />
                         <SurgeryInput label="Age / DOB" name="age" required />
                      </div>
                      <div className="grid grid-cols-2 gap-6">
                         <SurgeryInput label="Weight (kg)" name="weight" required />
-                        <SurgerySelect label="Urgency" name="urgency" options={["Elective", "Emergency", "Neonatal Priority"]} />
+                        <SurgerySelect label="Urgency" name="urgency" defaultValue={initialData?.priority === "Emergency" ? "Emergency" : "Elective"} options={["Elective", "Emergency", "Neonatal Priority"]} />
                      </div>
                   </div>
 
@@ -713,6 +745,7 @@ function NewCaseModal({ onClose, refresh }: any) {
                   <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Clinical Indication / Diagnosis</label>
                   <textarea 
                      name="conditionDetails"
+                     defaultValue={initialData?.reason}
                      className="w-full bg-[#F8FAFC] border border-slate-100 rounded-3xl p-6 text-sm font-medium text-slate-900 outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-300 transition-all min-h-[120px]"
                      required
                   />
@@ -730,7 +763,7 @@ function NewCaseModal({ onClose, refresh }: any) {
    );
 }
 
-function SurgeryInput({ label, name, required, placeholder }: any) {
+function SurgeryInput({ label, name, required, placeholder, defaultValue }: any) {
   return (
     <div className="space-y-2">
       <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{label}</label>
@@ -738,22 +771,59 @@ function SurgeryInput({ label, name, required, placeholder }: any) {
         name={name}
         required={required}
         placeholder={placeholder}
+        defaultValue={defaultValue}
         className="w-full bg-[#F8FAFC] border border-slate-100 rounded-2xl px-6 py-4 text-sm font-bold text-slate-900 outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-300 transition-all"
       />
     </div>
   );
 }
 
-function SurgerySelect({ label, name, options }: any) {
+function SurgerySelect({ label, name, options, defaultValue }: any) {
   return (
     <div className="space-y-2">
       <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{label}</label>
       <select 
         name={name}
+        defaultValue={defaultValue}
         className="w-full bg-[#F8FAFC] border border-slate-100 rounded-2xl px-6 py-4 text-sm font-bold text-slate-900 outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-300 transition-all appearance-none cursor-pointer"
       >
         {options.map((opt: string) => <option key={opt} value={opt}>{opt}</option>)}
       </select>
     </div>
   );
+}
+
+function TheatreScheduler({ cases }: { cases: PaediatricCase[] }) {
+   const theatres = ["Theatre 1", "Theatre 2", "Theatre 3"];
+   const scheduledCases = cases.filter(c => c.status !== "Completed" && c.theatreId);
+
+   return (
+      <div className="space-y-12">
+         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {theatres.map(theatre => (
+               <div key={theatre} className="bg-white rounded-[3rem] p-10 border border-slate-100 shadow-soft">
+                  <div className="flex items-center justify-between mb-8">
+                     <h3 className="text-xl font-bold italic serif text-slate-900">{theatre}</h3>
+                     <Calendar className="h-5 w-5 text-blue-500 opacity-30" />
+                  </div>
+                  <div className="space-y-4">
+                     {scheduledCases.filter(c => c.theatreId === theatre || (theatre === "Theatre 1" && !c.theatreId)).map((c, idx) => (
+                        <div key={c.id} className="p-4 bg-slate-50 rounded-2xl border border-slate-200">
+                           <div className="flex items-center justify-between mb-2">
+                              <span className={`text-[8px] font-bold uppercase tracking-widest ${c.urgency === 'Emergency' ? 'text-rose-500' : 'text-blue-500'}`}>{c.urgency}</span>
+                              <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">0{idx+9}:00 AM</span>
+                           </div>
+                           <div className="text-sm font-bold italic serif text-slate-900">{c.patientName}</div>
+                           <div className="text-[9px] font-bold text-slate-400 uppercase mt-1">{c.procedureType}</div>
+                        </div>
+                     ))}
+                     {scheduledCases.filter(c => c.theatreId === theatre).length === 0 && (
+                        <div className="text-center py-10 text-slate-300 italic serif text-sm">No operations scheduled</div>
+                     )}
+                  </div>
+               </div>
+            ))}
+         </div>
+      </div>
+   );
 }

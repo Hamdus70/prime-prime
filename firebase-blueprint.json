@@ -531,6 +531,48 @@
       },
       "required": ["theatreId", "startTime", "endTime", "status"]
     },
+    "PaediatricSurgeryCase": {
+      "title": "Paediatric Surgical Case",
+      "description": "Child-specific surgical workflow record.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "patientId": { "type": "string" },
+        "patientName": { "type": "string" },
+        "guardianName": { "type": "string" },
+        "age": { "type": "string" },
+        "weight": { "type": "string" },
+        "procedureType": { "type": "string" },
+        "status": { "type": "string", "enum": ["Pre-Operative", "Intra-Operative", "Post-Operative", "Completed"] },
+        "urgency": { "type": "string", "enum": ["Elective", "Emergency", "Neonatal Priority"] },
+        "subspecialty": { "type": "string", "enum": ["Neonatal", "General Paediatric", "Trauma"] },
+        "theatreId": { "type": "string" },
+        "assignedSurgeonName": { "type": "string" },
+        "birthWeight": { "type": "string" },
+        "apgarScore": { "type": "string" },
+        "anomalies": { "type": "string" },
+        "feedingStatus": { "type": "string" },
+        "conditionDetails": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["patientId", "patientName", "guardianName", "status", "urgency"]
+    },
+    "Referral": {
+      "title": "Clinical Referral",
+      "description": "Inter-departmental patient transfer request.",
+      "type": "object",
+      "properties": {
+        "patientId": { "type": "string" },
+        "patientName": { "type": "string" },
+        "sourceDept": { "type": "string" },
+        "targetDept": { "type": "string" },
+        "reason": { "type": "string" },
+        "priority": { "type": "string", "enum": ["Routine", "Urgent", "Emergency"] },
+        "status": { "type": "string", "enum": ["Pending", "Reviewed", "Completed"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["patientId", "patientName", "sourceDept", "targetDept", "reason"]
+    },
     "OGCase": {
       "title": "Obstetrics & Gynaecology Case",
       "description": "Comprehensive O&G clinical record for pregnancy and reproductive health.",
@@ -679,6 +721,14 @@
     "/theatre_schedule/{scheduleId}": {
       "schema": "TheatreSchedule",
       "description": "Operating room time management."
+    },
+    "/paediatric_surgery_cases/{caseId}": {
+      "schema": "PaediatricSurgeryCase",
+      "description": "Child-specific surgical records."
+    },
+    "/referrals/{referralId}": {
+      "schema": "Referral",
+      "description": "Inter-departmental patient referrals."
     }
   }
 }

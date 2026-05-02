@@ -41,6 +41,7 @@ function InternalMedicineDashboard() {
   ];
 
   const [activeChronicCare, setActiveChronicCare] = useState<string | null>(null);
+  const [clinicalAlerts, setClinicalAlerts] = useState<any[]>([]);
 
   useEffect(() => {
     if (user) {
@@ -48,6 +49,30 @@ function InternalMedicineDashboard() {
         fetchActivePatients();
     }
   }, [user]);
+
+  useEffect(() => {
+    if (selectedPatient) {
+       detectVitalAlerts(selectedPatient);
+    }
+  }, [selectedPatient]);
+
+  function detectVitalAlerts(patient: any) {
+    const alerts = [];
+    // BP logic
+    if (patient.bp) {
+       const [sys, dia] = patient.bp.split('/').map(Number);
+       if (sys > 140 || dia > 90) alerts.push({ type: 'critical', msg: 'Systemic Hypertension (Grade 2)', icon: Activity });
+       if (sys < 90) alerts.push({ type: 'urgent', msg: 'Hypotension Detected', icon: AlertCircle });
+    }
+    // Heart rate logic (assuming pulse in bpm)
+    if (patient.pulse && Number(patient.pulse) > 100) alerts.push({ type: 'urgent', msg: 'Sinus Tachycardia', icon: Heart });
+    if (patient.pulse && Number(patient.pulse) < 60) alerts.push({ type: 'info', msg: 'Bradycardia Observed', icon: Heart });
+    
+    // Temp logic
+    if (patient.temp && Number(patient.temp) > 37.8) alerts.push({ type: 'urgent', msg: 'Febrile State Detected', icon: Thermometer });
+
+    setClinicalAlerts(alerts);
+  }
 
   async function fetchProfile() {
     try {
@@ -241,6 +266,93 @@ function InternalMedicineDashboard() {
                                <ProfileItem label="Weight" val={`${selectedPatient.weight || 70} kg`} />
                             </div>
 
+                            {clinicalAlerts.length > 0 && (
+                               <motion.div 
+                                 initial={{ opacity: 0, y: -20 }} 
+                                 animate={{ opacity: 1, y: 0 }} 
+                                 className="mb-10 p-8 bg-rose-50 border border-rose-100 rounded-[2.5rem] relative overflow-hidden"
+                               >
+                                  <div className="absolute top-0 right-0 p-6 opacity-10">
+                                     <AlertCircle className="h-16 w-16 text-rose-500" />
+                                  </div>
+                                  <h4 className="text-[10px] font-bold text-rose-600 uppercase tracking-widest mb-6 px-2 flex items-center gap-2">
+                                     <Activity className="h-4 w-4 animate-pulse" /> Clinical Guard: Vital Alerts
+                                  </h4>
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                     {clinicalAlerts.map((alert, i) => (
+                                        <div key={i} className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-rose-100 shadow-sm">
+                                           <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${alert.type === 'critical' ? 'bg-rose-100 text-rose-600' : 'bg-amber-100 text-amber-600'}`}>
+                                              <alert.icon className="h-5 w-5" />
+                                           </div>
+                                           <span className="text-sm font-bold text-slate-800 italic serif">{alert.msg}</span>
+                                        </div>
+                                     ))}
+                                  </div>
+                               </motion.div>
+                            )}
+
+                            {activeSubspecialty === "Cardiology" && (
+                               <div className="mb-10 p-10 bg-indigo-50/40 border border-indigo-100 rounded-[3rem] relative overflow-hidden backdrop-blur-md">
+                                  <div className="absolute -right-12 -top-12 opacity-5">
+                                     <Heart className="h-48 w-48 text-indigo-500" />
+                                  </div>
+                                  <div className="relative z-10">
+                                     <div className="flex items-center justify-between mb-8">
+                                        <h4 className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest px-2">Subspecialty: Cardiovascular Analytics</h4>
+                                        <span className="px-3 py-1 bg-white border border-indigo-100 rounded-lg text-[8px] font-bold text-indigo-400 uppercase tracking-widest">Live Stratification</span>
+                                     </div>
+                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                        <div className="p-6 bg-white rounded-3xl border border-indigo-50 shadow-sm">
+                                           <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-2">ASCVD 10-Yr Risk</p>
+                                           <div className="flex items-baseline gap-2">
+                                              <span className="text-2xl font-black text-rose-500 italic serif">14.2%</span>
+                                              <span className="text-[8px] font-bold text-rose-400 uppercase">High Risk</span>
+                                           </div>
+                                        </div>
+                                        <div className="p-6 bg-white rounded-3xl border border-indigo-50 shadow-sm">
+                                           <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-2">Ejection Fraction</p>
+                                           <span className="text-2xl font-black text-emerald-500 italic serif">58%</span>
+                                        </div>
+                                        <div className="p-6 bg-white rounded-3xl border border-indigo-50 shadow-sm">
+                                           <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-2">QTc Interval</p>
+                                           <span className="text-2xl font-black text-slate-900 italic serif">422 ms</span>
+                                        </div>
+                                     </div>
+                                  </div>
+                               </div>
+                            )}
+
+                            {activeSubspecialty === "Endocrinology" && (
+                               <div className="mb-10 p-10 bg-emerald-50/40 border border-emerald-100 rounded-[3rem] relative overflow-hidden backdrop-blur-md">
+                                  <div className="absolute -right-12 -top-12 opacity-5">
+                                     <Activity className="h-48 w-48 text-emerald-500" />
+                                  </div>
+                                  <div className="relative z-10">
+                                     <div className="flex items-center justify-between mb-8">
+                                        <h4 className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest px-2">Subspecialty: Metabolic Monitoring</h4>
+                                        <span className="px-3 py-1 bg-white border border-emerald-100 rounded-lg text-[8px] font-bold text-emerald-400 uppercase tracking-widest">Glycemic Review</span>
+                                     </div>
+                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                        <div className="p-6 bg-white rounded-3xl border border-emerald-50 shadow-sm">
+                                           <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-2">Estimated HbA1c</p>
+                                           <div className="flex items-baseline gap-2">
+                                              <span className="text-2xl font-black text-amber-600 italic serif">7.1%</span>
+                                              <span className="text-[8px] font-bold text-amber-400 uppercase">Borderline</span>
+                                           </div>
+                                        </div>
+                                        <div className="p-6 bg-white rounded-3xl border border-emerald-50 shadow-sm">
+                                           <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-2">Estimated AVG Glucose</p>
+                                           <span className="text-2xl font-black text-emerald-500 italic serif">156 mg/dL</span>
+                                        </div>
+                                        <div className="p-6 bg-white rounded-3xl border border-emerald-50 shadow-sm">
+                                           <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-2">Target in Range</p>
+                                           <span className="text-2xl font-black text-slate-900 italic serif">72%</span>
+                                        </div>
+                                     </div>
+                                  </div>
+                               </div>
+                            )}
+
                             <div className="mb-12">
                                <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Physiological Trends History</h4>
                                <VitalTrendsChart patientId={selectedPatient.id} />
@@ -286,7 +398,7 @@ function InternalMedicineDashboard() {
                                       <Microscope className="h-5 w-5 text-amber-500" />
                                       <h3 className="text-lg font-bold text-slate-900 border-b-2 border-amber-100 pb-1">Diagnostic Investigations</h3>
                                    </div>
-                                   <InvestigationRequestManager patientId={selectedPatient.id} />
+                                   <InvestigationRequestManager patientId={selectedPatient.id} requestedFrom={`Internal Medicine: ${activeSubspecialty}`} />
                                 </section>
 
                                 <section>
@@ -294,7 +406,7 @@ function InternalMedicineDashboard() {
                                       <ShoppingCart className="h-5 w-5 text-indigo-500" />
                                       <h3 className="text-lg font-bold text-slate-900 border-b-2 border-indigo-100 pb-1">Pharmacy Prescriptions</h3>
                                    </div>
-                                   <PrescriptionManager patientId={selectedPatient.id} />
+                                   <PrescriptionManager patientId={selectedPatient.id} requestedFrom={`Internal Medicine: ${activeSubspecialty}`} />
                                 </section>
                              </div>
                          </div>
